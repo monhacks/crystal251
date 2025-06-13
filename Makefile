@@ -9,6 +9,16 @@ MD5 := md5sum -c --quiet
 gfx       := $(PYTHON) gfx.py
 includes  := $(PYTHON) scan_includes.py
 
+ifneq ($(wildcard rgbds/.*),)
+RGBDS := rgbds/
+else
+RGBDS :=
+endif
+
+RGBASM := $(RGBDS)rgbasm
+RGBFIX := $(RGBDS)rgbfix
+RGBGFX := $(RGBDS)rgbgfx
+RGBLINK := $(RGBDS)rgblink
 
 crystal_obj := \
 wram.o \
@@ -49,30 +59,30 @@ clean:
 
 %.o: dep = $(shell $(includes) $(@D)/$*.asm)
 %.o: %.asm $$(dep)
-	rgbasm -o $@ $<
+	$(RGBASM) -o $@ $<
 
 %_ai.o: dep = $(shell $(includes) $(@D)/$*.asm)
 %_ai.o: %.asm $$(dep)
-	rgbasm -D BEESAFREE -o $@ $<
+	$(RGBASM) -D BEESAFREE -o $@ $<
 
 %11.o: dep = $(shell $(includes) $(@D)/$*.asm)
 %11.o: %.asm $$(dep)
-	rgbasm -D CRYSTAL11 -o $@ $<
+	$(RGBASM) -D CRYSTAL11 -o $@ $<
 
 %.ips: %.gbc
 	ipspatch/ipspatch create baserom.gbc $< $@
 
 pokecrystal11.gbc: $(crystal11_obj)
-	rgblink -n pokecrystal11.sym -m pokecrystal11.map -o $@ $^
-	rgbfix -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -n 1 -p 0 -r 3 -t TPPCRYSTAL $@
+	$(RGBLINK) -n pokecrystal11.sym -m pokecrystal11.map -o $@ $^
+	$(RGBFIX) -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -n 1 -p 0 -r 3 -t TPPCRYSTAL $@
 
 pokecrystal.gbc: $(crystal_obj)
-	rgblink -n pokecrystal.sym -m pokecrystal.map -o $@ $^
-	rgbfix -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -p 0 -r 3 -t TPPCRYSTAL $@
+	$(RGBLINK) -n pokecrystal.sym -m pokecrystal.map -o $@ $^
+	$(RGBFIX) -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -p 0 -r 3 -t TPPCRYSTAL $@
 
 pokecrystal_ai.gbc: $(beesafree_obj)
-	rgblink -n pokecrystal_ai.sym -m pokecrystal_ai.map -o $@ $^
-	rgbfix -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -n 1 -p 0 -r 3 -t TPPCRYSTAL $@
+	$(RGBLINK) -n pokecrystal_ai.sym -m pokecrystal_ai.map -o $@ $^
+	$(RGBFIX) -Cjv -i BORT -k 01 -l 0x33 -m 0x10 -n 1 -p 0 -r 3 -t TPPCRYSTAL $@
 
 %.exe: %.c
 	gcc -O3 -Wno-unused-result $< -o $@
